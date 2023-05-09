@@ -22,9 +22,9 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      chainId: 1337,
+      chainId: 3141,
       forking: {
-        enabled: true,
+        enabled: false,
         blockNumber: undefined,
         url: node_url("hyperspace"),
       },

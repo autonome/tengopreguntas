@@ -3,7 +3,7 @@ import { deployments, ethers } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { Ship } from "../utils";
-import { BytesLike } from "ethers";
+import { BigNumber, BytesLike } from "ethers";
 import { PromiseOrValue } from "../types/common";
 import { DailyPool, DailyPool__factory } from "../types";
 
@@ -30,8 +30,6 @@ const setup = deployments.createFixture(async (hre) => {
 });
 
 describe("Daily pool unit tests", () => {
-  const depositAmount = ethers.utils.parseEther("1");
-
   beforeEach(async () => {
     const scaffold = await setup();
 
@@ -40,6 +38,8 @@ describe("Daily pool unit tests", () => {
     vault = scaffold.accounts.vault;
 
     dailyPool = await ship.connect(DailyPool__factory);
+    const depositAmount = await dailyPool.depositAmount();
+    console.log(BigNumber.from(depositAmount).toNumber());
   });
 
   describe("Deposit", () => {

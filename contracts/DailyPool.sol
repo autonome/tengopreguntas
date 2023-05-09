@@ -2,10 +2,15 @@
 pragma solidity 0.8.17;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract DailyPool is Ownable {
+contract DailyPool is ReentrancyGuard, Ownable {
+  using ECDSA for bytes32;
+
   uint256 public startTimestamp;
   uint256 public depositAmount;
+  uint256 public currentPoolAmount; // current round's pool amount
   uint24 public currentRoundId;
   uint24 public minAttendance = 100;
   IERC20 public usdtContract;
@@ -21,10 +26,10 @@ contract DailyPool is Ownable {
   struct RoundInfo {
     string question;
     string encryptedAnswer;
-    uint24 attendance;
+    uint24 attendance; // the number of participants
     string publicKey; // used to encrypt answers. Entered at the start of the round.
     string privateKey; // used to decrypt answers. Entered at the end of the round.
-    uint256 prize;
+    uint256 prize; // total prize of round
     ClaimStatus claimstatus;
     bool platformFeeTransferred;
   }
@@ -33,6 +38,7 @@ contract DailyPool is Ownable {
     bool isDeposited;
     bool isAnswered;
     string encryptedAnswer;
+    uint256 prize;
   }
 
   struct TopWinnerStructure {
@@ -55,6 +61,7 @@ contract DailyPool is Ownable {
   event TopWinnerPrizeTransferred(uint256 indexed topOnePrize, uint256 indexed topTenPrize);
   event RestWinnerPrizeTransferred(uint256 indexed topOnePrize, uint256 indexed prize);
   event PlatformFeeTransferred(uint256 indexed amount);
+  event PrizeClaimed(uint24 indexed roundId, address indexed winner, uint256 indexed prize);
 
   constructor(
     string memory _firstQuestion,
@@ -63,7 +70,7 @@ contract DailyPool is Ownable {
     uint8 _tokenDecimal
   ) {
     usdtContract = IERC20(_usdtContractAddress);
-    depositAmount = 1 * _tokenDecimal;
+    depositAmount = 10 ** _tokenDecimal;
     startTimestamp = block.timestamp;
     roundInfos[currentRoundId].question = _firstQuestion;
     roundInfos[currentRoundId].publicKey = _publicKey;
@@ -71,6 +78,7 @@ contract DailyPool is Ownable {
     emit NewRoundOpened(currentRoundId, roundInfos[currentRoundId], block.timestamp);
   }
 
+  ///@notice Function to deposit usdt for users
   function deposit() external {
     require(
       !roundUserInfos[currentRoundId][msg.sender].isDeposited,
@@ -79,8 +87,10 @@ contract DailyPool is Ownable {
     usdtContract.transferFrom(msg.sender, address(this), depositAmount);
     roundUserInfos[currentRoundId][msg.sender].isDeposited = true;
     roundInfos[currentRoundId].prize += depositAmount;
+    currentPoolAmount += depositAmount;
   }
 
+  ///@notice Function to finish prev round and start next one, executed by admin(backend)
   ///@param _nextQuestion new question
   ///@param _encryptedNextAnswer new encrypted answer
   ///@param _privateKey current round's private key to decrypt the answer
@@ -90,7 +100,7 @@ contract DailyPool is Ownable {
     string calldata _nextPublicKey,
     string calldata _encryptedNextAnswer,
     string calldata _privateKey
-  ) public onlyOwner {
+  ) external onlyOwner {
     require(block.timestamp >= startTimestamp + 1 days, "Not finished previous round");
     startTimestamp = block.timestamp;
     if (roundInfos[currentRoundId].attendance < minAttendance) {
@@ -99,16 +109,19 @@ contract DailyPool is Ownable {
       roundInfos[currentRoundId].encryptedAnswer = _encryptedNextAnswer;
     } else {
       roundInfos[currentRoundId].privateKey = _privateKey; // set prev round's private key
+      _transferDaoPrize(currentRoundId); // transfer dao prize
       // start next round
       currentRoundId++;
       roundInfos[currentRoundId].encryptedAnswer = _encryptedNextAnswer;
       roundInfos[currentRoundId].question = _nextQuestion;
       roundInfos[currentRoundId].publicKey = _nextPublicKey;
+      roundInfos[currentRoundId].prize = currentPoolAmount; // add unclained prize to next pool
     }
 
     emit NewRoundOpened(currentRoundId, roundInfos[currentRoundId], block.timestamp);
   }
 
+  ///@notice Function to submit answer from user side
   ///@param _encryptedAnswer answer that is submitted by user
   ///@dev encrypted from dapp using public key
   function submitAnswer(string calldata _encryptedAnswer) external {
@@ -131,55 +144,52 @@ contract DailyPool is Ownable {
     emit AnswerSubmitted(currentRoundId, msg.sender, _encryptedAnswer);
   }
 
-  // send platform fee for dao and donation
-  function transferDaoPrize(uint24 _roundId) public onlyOwner {
+  ///@notice Function to claim prize
+  ///@param signature signed message with prize and winner address by platform owner
+  ///@param _prize winner's prize
+  ///@dev close prev round and open new one, operated by admin
+  function claimPrize(bytes calldata signature, uint256 _prize) external nonReentrant {
+    require(_verifyPlatformOwner(signature, _prize), "Wrong prize");
+    require(
+      roundUserInfos[currentRoundId - 1][msg.sender].prize == 0,
+      "Already Claimed or no prize to claim"
+    );
+    _transferPrize(msg.sender, _prize);
+    roundUserInfos[currentRoundId - 1][msg.sender].prize = _prize;
+    currentPoolAmount -= _prize;
+    emit PrizeClaimed(currentRoundId - 1, msg.sender, _prize);
+  }
+
+  ///@notice Function to send platform fee for dao and donation
+  function _transferDaoPrize(uint24 _roundId) private nonReentrant {
     require(_roundId < currentRoundId, "Not finished round");
     require(!roundInfos[_roundId].platformFeeTransferred, "Already claimed");
-    _transferSinglePrize(daoMsigAddress, (roundInfos[_roundId].prize * 3) / 100);
-    _transferSinglePrize(donationMsigAddress, (roundInfos[_roundId].prize * 2) / 100);
-
+    _transferPrize(daoMsigAddress, (roundInfos[_roundId].prize * 3) / 100);
+    _transferPrize(donationMsigAddress, (roundInfos[_roundId].prize * 2) / 100);
+    roundInfos[_roundId].platformFeeTransferred = true;
     emit PlatformFeeTransferred((roundInfos[_roundId].prize * 5) / 100);
   }
 
-  // send prize to top winners
-  function transferTopWinnerPrize(
-    TopWinnerStructure calldata _winners,
-    uint24 _roundId
-  ) public onlyOwner {
-    require(_roundId < currentRoundId, "Not finished round");
-    require(_winners.secondFive.length == 5, "Wrong winner length");
-    require(roundInfos[_roundId].claimstatus == ClaimStatus.NotClaimed, "Already Claimed");
-    uint256 winnerPrize = (roundInfos[_roundId].prize * 95) / 100;
-    uint256 topOnePrize = (winnerPrize * 25) / 100;
-    _transferSinglePrize(_winners.firstOne, topOnePrize);
-    uint256 topFiveprize = (winnerPrize * 25) / 100 / 5; //calculate top 5 winner prize
-    _transferMultiPrize(_winners.secondFive, topFiveprize);
-    roundInfos[_roundId].claimstatus = ClaimStatus.TopWinnersClaimed;
-
-    emit TopWinnerPrizeTransferred(topOnePrize, topFiveprize);
-  }
-
-  // send prize to rest winners
-  function transferRestWinnerPrize(address[] calldata _winners, uint24 _roundId) public onlyOwner {
-    require(roundInfos[_roundId].claimstatus == ClaimStatus.TopWinnersClaimed, "Already Claimed");
-    uint256 winnerPrize = (roundInfos[_roundId].prize * 95) / 100;
-    uint256 prize = (winnerPrize * 50) / 100 / _winners.length; //calculate rest winners prize
-    _transferMultiPrize(_winners, prize);
-    roundInfos[_roundId].claimstatus = ClaimStatus.AllClaimed;
-
-    emit RestWinnerPrizeTransferred(_winners.length, prize);
-  }
-
-  function _transferMultiPrize(address[] memory _winners, uint256 _prize) private {
-    uint256 winnerLength = _winners.length;
-    for (uint i = 0; i < winnerLength; i++) {
-      bool sent = usdtContract.transfer(_winners[i], _prize);
-      require(sent, "Failed to transfer prize to winners");
-    }
-  }
-
-  function _transferSinglePrize(address _winner, uint256 _prize) private {
-    bool sent = usdtContract.transfer(_winner, _prize);
+  function _transferPrize(address _to, uint256 _prize) private {
+    bool sent = usdtContract.transfer(_to, _prize);
     require(sent, "Failed to transfer prize");
+  }
+
+  /**
+   * @notice Function to verify owner to get winner's prize
+   * @dev
+   * - Should encode winner's prize and winner address
+   * - Get message from ECDSA library
+   * - Recover address
+   * - Return boolean if same as owner() true, not false
+   */
+  function _verifyPlatformOwner(
+    bytes calldata signature,
+    uint256 _prize
+  ) private view returns (bool) {
+    bytes32 hash = keccak256(abi.encodePacked(_prize, msg.sender));
+    bytes32 message = ECDSA.toEthSignedMessageHash(hash);
+    address recoveredAddress = ECDSA.recover(message, signature);
+    return (recoveredAddress == owner());
   }
 }

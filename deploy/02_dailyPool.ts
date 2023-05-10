@@ -7,9 +7,10 @@ const func: DeployFunction = async (hre) => {
   const usdtContract = await connect(TestUSDT__factory);
   const decimal = await usdtContract.decimals()
   const firstQuestion = "What is the blockchain?";
-  const publicKey = "What is the blockchain?";
+  const publicKey = "First privatekey";
+  const encryptedAnswer = "First Encrypted answer";
   await deploy(DailyPool__factory, {
-    args: [firstQuestion, publicKey, usdtContract.address, decimal],
+    args: [firstQuestion, encryptedAnswer, publicKey, usdtContract.address, decimal],
   });
 };
 

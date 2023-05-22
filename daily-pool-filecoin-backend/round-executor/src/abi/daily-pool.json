@@ -1,0 +1,459 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_firstQuestion",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_encryptedAnswer",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_usdtContractAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_tokenDecimal",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "NotAnswerTime",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint24",
+        "name": "roundId",
+        "type": "uint24"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "respondent",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "answer",
+        "type": "string"
+      }
+    ],
+    "name": "AnswerSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint24",
+        "name": "roundId",
+        "type": "uint24"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "question",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "encryptedAnswer",
+            "type": "string"
+          },
+          {
+            "internalType": "uint24",
+            "name": "attendance",
+            "type": "uint24"
+          },
+          {
+            "internalType": "string",
+            "name": "answer",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "prize",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "platformFeeTransferred",
+            "type": "bool"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct DailyPool.RoundInfo",
+        "name": "roundInfo",
+        "type": "tuple"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "startTimestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "NewRoundOpened",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "PlatformFeeTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint24",
+        "name": "roundId",
+        "type": "uint24"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "winner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "prize",
+        "type": "uint256"
+      }
+    ],
+    "name": "PrizeClaimed",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "signature",
+        "type": "bytes"
+      },
+      {
+        "internalType": "enum DailyPool.RANK",
+        "name": "_rank",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint24",
+        "name": "_players",
+        "type": "uint24"
+      }
+    ],
+    "name": "claimPrize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "currentRoundId",
+    "outputs": [
+      {
+        "internalType": "uint24",
+        "name": "",
+        "type": "uint24"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "daoMsigAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "depositAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "donationMsigAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_nextQuestion",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_encryptedNextAnswer",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_answer",
+        "type": "string"
+      }
+    ],
+    "name": "executeRound",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lockedPoolAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minAttendance",
+    "outputs": [
+      {
+        "internalType": "uint24",
+        "name": "",
+        "type": "uint24"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint24",
+        "name": "",
+        "type": "uint24"
+      }
+    ],
+    "name": "roundInfos",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "question",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "encryptedAnswer",
+        "type": "string"
+      },
+      {
+        "internalType": "uint24",
+        "name": "attendance",
+        "type": "uint24"
+      },
+      {
+        "internalType": "string",
+        "name": "answer",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "prize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "platformFeeTransferred",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint24",
+        "name": "",
+        "type": "uint24"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "roundUserInfos",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "isAnswered",
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "encryptedAnswer",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "prize",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint24",
+        "name": "_newMinAttendance",
+        "type": "uint24"
+      }
+    ],
+    "name": "setMinAttendance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startTimestamp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_encryptedAnswer",
+        "type": "string"
+      }
+    ],
+    "name": "submitAnswer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdtContract",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

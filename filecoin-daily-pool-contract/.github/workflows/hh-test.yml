@@ -31,7 +31,7 @@ jobs:
 
       - name: 'Create env file'
         run: |
-          echo "FILECOIN_RPC_URL=https://flare-api.flare.network/ext/C/rpc" > .env
+          echo "FILECOIN_RPC_URL=https://api.calibration.node.glif.io/rpc/v1" > .env
 
       - name: Compile
         run: yarn compile

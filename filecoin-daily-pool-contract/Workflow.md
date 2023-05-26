@@ -1,0 +1,19 @@
+- When a smart contract is deployed:
+  -  A public and private key pair is generated (RSA or else).
+  -  The first question and encrypted answer are used as the constructor parameters of the contract.
+  -  The first round is started. 
+- Backend should be run before smart contract deployed.
+  - Backend is scanning block whenever new blocks are mined and getting necessary events.
+- Users can see the first question from frontend and contract but Cant know the answer because it is encrypted using generated RSA key pair.
+- If someone(user) inputs his answer and click submit button, backend is getting users answer and returns encrypted user's answer.
+  - The answer and encrypted answer are stored on Backend database.
+- On the frontend, `submitAnswer` function of contract is called with encrypted answer and if it is success, `AnswerSubmitted` event is emitted.
+ > emit AnswerSubmitted(currentRoundId, msg.sender, _encryptedAnswer);
+ - If backend get above event, the `encryptedAnswer`, `answerer`, `roundId` are used to verify user's answer using RSA key pair.
+ - In other hands, there is another backend service - Round Executor.
+   - It is always being run and execute new round whenever current round is ended calculating the time and Date.
+   - And then round is ended, not skipped, set players' rank on DB.
+ - Users can claim their reward by clicking claim button on frontend.
+   - If user click claim button, backend returns his rank and signature signed by admin wallet private key.
+   - It is to secure and keep users' rank. If we dont have this flow, users can set his rank as they want.
+ - Unclaimed rewards are added to the next round's pool.

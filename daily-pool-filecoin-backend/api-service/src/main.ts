@@ -15,7 +15,11 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.use(json({ limit: '50mb' }));
 
-  app.enableCors();
+  app.enableCors({
+    origin: ['http://localhost:3000'],
+    methods: ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Daily-Pool-API-Backend')

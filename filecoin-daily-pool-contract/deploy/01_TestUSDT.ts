@@ -9,4 +9,4 @@ const func: DeployFunction = async (hre) => {
 };
 
 export default func;
-func.tags = ["usdt", "all"];
+func.tags = ["test-usdt", "test-all"];

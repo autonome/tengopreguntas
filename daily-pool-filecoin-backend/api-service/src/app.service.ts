@@ -70,7 +70,7 @@ export class AppService {
     return [
       currentAnswer?.answer || '',
       [prevAnswer?.answer || '', prevRound?.answer || ''],
-      prevAnswer.rank,
+      prevAnswer?.rank,
     ];
   }
 

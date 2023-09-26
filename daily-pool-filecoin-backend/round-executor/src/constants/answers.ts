@@ -1,1 +1,1 @@
-export const correctAnswers = ['1!', '2!', '3!', '4!'];
+export const correctAnswers = ['question1!', 'question2!', 'question3!', 'question4!'];

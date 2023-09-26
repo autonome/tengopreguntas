@@ -46,6 +46,7 @@ export class AppService {
       console.log('Not found round to finish');
       await sleep(2000);
       this.finishRound();
+      return;
     }
     console.log(`RoundId to finish: ${lastRound.roundId}`);
     try {

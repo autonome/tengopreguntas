@@ -15,11 +15,6 @@
         "internalType": "address",
         "name": "_usdtContractAddress",
         "type": "address"
-      },
-      {
-        "internalType": "uint8",
-        "name": "_tokenDecimal",
-        "type": "uint8"
       }
     ],
     "stateMutability": "nonpayable",
@@ -448,7 +443,7 @@
     "name": "usdtContract",
     "outputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract ERC20",
         "name": "",
         "type": "address"
       }

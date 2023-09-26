@@ -26,7 +26,7 @@ const config: HardhatUserConfig = {
       forking: {
         enabled: false,
         blockNumber: undefined,
-        url: node_url("hyperspace"),
+        url: node_url("calibration"),
       },
       accounts: accounts("hardhat"),
       mining: {
@@ -68,14 +68,6 @@ const config: HardhatUserConfig = {
       mainnet: verifyKey("etherscan"),
     },
     customChains: [
-      {
-        network: "Filecoin - Hyperspace testnet",
-        chainId: 3141,
-        urls: {
-          apiURL: "https://hyperspace.filfox.info/api/v1",
-          browserURL: "https://hyperspace.filfox.info/en/",
-        },
-      },
       {
         network: "Filecoin - Calibration testnet",
         chainId: 314159,

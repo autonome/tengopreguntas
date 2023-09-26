@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.17;
+
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
@@ -13,7 +15,7 @@ contract DailyPool is ReentrancyGuard, Ownable {
   uint256 public lockedPoolAmount; // prev round's pool amount to be claimed
   uint24 public currentRoundId;
   uint24 public minAttendance = 2;
-  IERC20 public usdtContract;
+  ERC20 public usdtContract;
   address public daoMsigAddress = 0x7B941952696Dc372628E06Ee129cc14195788475;
   address public donationMsigAddress = 0x7B941952696Dc372628E06Ee129cc14195788475;
 
@@ -52,11 +54,10 @@ contract DailyPool is ReentrancyGuard, Ownable {
   constructor(
     string memory _firstQuestion,
     string memory _encryptedAnswer,
-    address _usdtContractAddress,
-    uint8 _tokenDecimal
+    address _usdtContractAddress
   ) {
-    usdtContract = IERC20(_usdtContractAddress);
-    depositAmount = 10 ** _tokenDecimal;
+    usdtContract = ERC20(_usdtContractAddress);
+    depositAmount = 10 ** usdtContract.decimals();
     startTimestamp = block.timestamp;
     roundInfos[currentRoundId].question = _firstQuestion;
     roundInfos[currentRoundId].encryptedAnswer = _encryptedAnswer;

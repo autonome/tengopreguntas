@@ -13,11 +13,11 @@ export const SCAN_URL = {
 };
 
 export const START_BLOCK_NUMBER = {
-  [NodeEnv.DEV]: 581371,
+  [NodeEnv.DEV]: 944540,
   [NodeEnv.PROD]: 0,
 };
 
 export const CONTRACT_ADDRESS = {
-  [NodeEnv.DEV]: '0xba02ACCE5A28c3C3C41eDCB5be7f5f7AC7f1859a',
+  [NodeEnv.DEV]: '0x4A8d39Adb04d8cA9d1BAa8d227D5756740C611a8',
   [NodeEnv.PROD]: '0xe46ED7f5e47E84B2feC94be582728Fd44cF6E22B', //FIXME
 };
